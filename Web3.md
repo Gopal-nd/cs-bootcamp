@@ -3,8 +3,8 @@
 ## Warm Up Videos
 
 [X] Web3 Orientiation
-[ ] Public Key Creptography
-[ ] Bitcoin WhitePaper
+[X] Public Key Creptography
+[X] Bitcoin WhitePaper
 
 ### Web3 Orientiation 
 [Slides](https://projects.100xdevs.com/tracks/web3-orientation/Web3-Cohort---Orientation-2)
@@ -25,4 +25,9 @@ Private / Public Key
 ### Public / Private Key Creptography 
 [slides](https://projects.100xdevs.com/tracks/public-private-keys/Public-Key-Cryptography-1)
 
-Build A Web Based Wallet
+Build A Web Based Wallet - Completed [LiveDemo](https://web-wallet-nd.vercel.app/)
+
+### Understanding Bitcoin White Paper
+
+Bitcoin White Paper [link](https://bitcoin.org/bitcoin.pdf)
+
