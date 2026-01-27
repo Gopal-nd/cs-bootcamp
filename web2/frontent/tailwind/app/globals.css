@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+
+:root {
+  --geist-font-sans: 'Geist', sans-serif;
+  --geist-font-mono: 'Geist Mono', monospace;
+  --inter-font-sans: 'Inter', sans-serif;
+  --custom-red :#FF0000;
+}
+
+@theme {
+  --color-nd :green;
+  --font-nd : 'Momo Signature', cursive;
+  --color-sec:#949494;
+  --shadow-nd: 
+    0px 2px 3px -1px rgba(0, 0, 0, 0.1),
+    0px 1px 0px 0px rgba(25, 28, 33, 0.02),
+    0px 0px 0px 1px rgba(25, 28, 33, 0.08);
+  --animate-me : me 10s linear infinite;
+  @keyframes me {
+    from {
+      transform: translateX(100)
+    }
+    to {
+      transform: translateX(-200)
+    }
+  }
+}
