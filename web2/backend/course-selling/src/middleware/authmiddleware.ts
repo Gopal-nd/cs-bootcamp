@@ -9,9 +9,9 @@ import { password } from 'bun'
 import jwt from 'jsonwebtoken'
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies['token']
+  const token = req.cookies['token'] ?? req.headers.authorization?.split(' ')[1]
   if (!token) {
-    res.status(400).json({ message: 'cookies /token not provided' })
+    return res.status(400).json({ message: 'cookies /token not provided' })
   }
   try {
 
@@ -27,9 +27,9 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 }
 
 export const instructorMiddleware = async (req: Request, res: Response, next: NextFunction,) => {
-  const token = req.cookies['token']
+  const token = req.cookies['token'] ?? req.headers.authorization?.split(' ')[1]
   if (!token) {
-    res.status(400).json({ message: 'cookies /token not provided' })
+    return res.status(400).json({ message: 'cookies /token not provided' })
   }
   try {
 
@@ -45,7 +45,7 @@ export const instructorMiddleware = async (req: Request, res: Response, next: Ne
 }
 
 export const requiredRole = (role: string) => async (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies['token']
+  const token = req.cookies['token'] ?? req.headers.authorization?.split(' ')[1]
   if (!token) {
     return res.status(400).json({ message: 'cookies /token not provided' })
   }

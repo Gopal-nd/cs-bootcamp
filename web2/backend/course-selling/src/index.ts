@@ -5,7 +5,9 @@ import authRouter from './routes/auth.ts'
 import courseRouter from './routes/courses.ts'
 import { authMiddleware, requiredRole } from './middleware/authmiddleware.ts'
 import { puschaseSchema } from './types/index.ts'
+import jwt from 'jsonwebtoken'
 import prisma from '../db/index.ts'
+import { email } from 'zod'
 const app = express()
 app.use(express.json())
 app.use(cors())
@@ -35,7 +37,7 @@ app.post('/purchases', authMiddleware, async (req: Request, res: Response) => {
         userId: req.user.id
       }
     })
-    return res.status(201).json({ message: 'purchases made successfull', data: newPurchases })
+    return res.status(200).json(newPurchases)
   } catch (error) {
     console.log(error)
     res.status(403).json({ message: "purchases route went wrong" })
@@ -53,11 +55,29 @@ app.get('/users/:id/purchases', authMiddleware, async (req: Request, res: Respon
     const newPurchases = await prisma.purchase.findMany({
       where: {
         userId: req.user.id
+      },
+      include: {
+        course: true
       }
     })
-    return res.status(201).json({ message: 'success', data: newPurchases })
+    return res.status(201).json(newPurchases)
   } catch (error) {
     res.status(403).json({ message: "purchases route went wrong" })
+  }
+})
+
+app.get('/me', async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies['token'] ?? req.headers.authorization?.split(' ')[1]
+    console.log(token)
+    if (!token) {
+      return res.status(400).json({ message: 'cookies /token not provided' })
+    }
+
+    const data: any = jwt.verify(token, process.env.SECRET || 'nd')
+    res.status(200).json({ email: data.data.email, id: data.data.id })
+  } catch (err) {
+    return res.status(403).json({ mes: "/me error" })
   }
 })
 

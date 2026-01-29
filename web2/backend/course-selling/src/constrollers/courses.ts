@@ -13,7 +13,8 @@ export const getallCourse = async (req: Request, res: Response) => {
         lessons: true
       }
     })
-    res.status(200).json({ data: newCourse, message: 'sucess' })
+    console.log(newCourse)
+    res.status(200).json(newCourse)
 
   } catch (error) {
     res.status(400).json({ message: "err in createcourse" })
@@ -35,7 +36,7 @@ export const deleteCourseById = async (req: Request, res: Response) => {
         lessons: true
       }
     })
-    res.status(200).json({ message: 'deleted sucessfully' })
+    res.status(200).json({ message: 'Course deleted' })
 
   } catch (error) {
     res.status(400).json({ message: "err in createcourse" })
@@ -54,8 +55,10 @@ export const getCourseById = async (req: Request, res: Response) => {
       include: {
         lessons: true
       }
+
     })
-    res.status(200).json({ data: newCourse, message: 'sucess' })
+    console.log(newCourse)
+    res.status(200).json(newCourse)
 
   } catch (error) {
     res.status(400).json({ message: "err in createcourse" })
@@ -86,8 +89,9 @@ export const editCourseById = async (req: Request, res: Response) => {
       include: {
         lessons: true
       }
+
     })
-    res.status(200).json({ data: newCourse, message: 'sucess' })
+    res.status(200).json({ newCourse })
 
   } catch (error) {
     res.status(400).json({ message: "err in createcourse" })
@@ -99,10 +103,10 @@ export const createCourse = async (req: Request, res: Response) => {
     const data = req.body
     const courseData = courseSchema.safeParse(data)
     if (!courseData.success) {
-      return res.status(400).json({ error: courseData.error })
+      return res.status(403).json({ error: courseData.error })
     }
     if (!req.user.id) {
-      return res.status(400).json({ error: 'userid required' })
+      return res.status(403).json({ error: 'userid required' })
     }
     const newCourse = await prisma.course.create({
       data: {
@@ -110,14 +114,18 @@ export const createCourse = async (req: Request, res: Response) => {
         title: courseData.data.title,
         description: courseData.data.description,
         instructorId: req.user.id
+      },
+      select: {
+        id: true
       }
     })
-    res.status(201).json({ data: newCourse, message: 'course creted' })
+    console.log(newCourse)
+    res.status(200).json({ id: newCourse.id, message: 'course creted' })
 
   } catch (error) {
     console.log(error)
 
-    res.status(400).json({ message: "err in createcourse" })
+    res.status(403).json({ message: "err in createcourse" })
   }
 }
 

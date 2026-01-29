@@ -11,7 +11,7 @@ export const signUpController = async (req: Request, res: Response) => {
   const data = req.body
   const signUpdate = signupSchema.safeParse(data)
   if (!signUpdate.success) {
-    return res.status(400).json(signUpdate.error)
+    return res.status(401).json(signUpdate.error)
   }
   try {
     const isExist = await prisma.user.findUnique({
@@ -34,7 +34,7 @@ export const signUpController = async (req: Request, res: Response) => {
       }
     })
 
-    res.status(201).json({ message: 'user created', data: newUser })
+    res.status(200).json({ message: 'user created', data: newUser })
 
   } catch (error) {
     res.status(400).json({ message: 'something went wrong in /auth/signup' })
