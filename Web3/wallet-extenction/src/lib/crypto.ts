@@ -1,7 +1,13 @@
-export async function encryptVault(
-  data: string,
-  password: string
-) {
+function toBase64(data: ArrayBuffer | Uint8Array): string {
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data)
+  let binary = ""
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
+}
+
+export async function encryptVault(data: string, password: string) {
   const enc = new TextEncoder()
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -34,9 +40,9 @@ export async function encryptVault(
   )
 
   return {
-    ciphertext: Buffer.from(ciphertext).toString("base64"),
-    iv: Buffer.from(iv).toString("base64"),
-    salt: Buffer.from(salt).toString("base64")
+    ciphertext: toBase64(ciphertext),
+    iv: toBase64(iv),
+    salt: toBase64(salt)
   }
 }
 

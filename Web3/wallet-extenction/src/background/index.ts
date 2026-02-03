@@ -1,12 +1,9 @@
+import "./shims"
 import { generateNewMnemonic, deriveWallets } from "../lib/wallet"
 import { encryptVault } from "../lib/crypto"
 import type { WalletType } from "@/types/wallet"
 
-
-
-chrome.runtime.onInstalled.addListener(async (details) => {
-
-  if (details.reason !== "install") return
+async function openOnboardingIfNeeded() {
   const { hasOnboarded } = await chrome.storage.local.get("hasOnboarded")
 
   if (!hasOnboarded) {
@@ -14,6 +11,21 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       url: chrome.runtime.getURL("onboarding.html")
     })
   }
+}
+
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason !== "install") return
+  await openOnboardingIfNeeded()
+})
+
+chrome.runtime.onStartup.addListener(() => {
+  // Fallback: if user was never onboarded, show onboarding on browser startup
+  void openOnboardingIfNeeded()
+})
+
+chrome.action.onClicked.addListener(() => {
+  // If the user clicks the toolbar icon and is not onboarded yet, open onboarding
+  void openOnboardingIfNeeded()
 })
 
 chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
