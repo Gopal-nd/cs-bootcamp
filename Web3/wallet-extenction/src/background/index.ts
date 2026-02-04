@@ -59,3 +59,65 @@ chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
   }
 })
 
+type StoredAccount = {
+  index: number
+  solana: string
+  ethereum: string
+}
+
+const state = {
+  mnemonic: '',
+  activeIndex: 0,
+  accounts: [] as StoredAccount[]
+}
+
+chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
+  if (msg.type === "GET_ACCOUNTS") {
+    const formatted = state.accounts.map((a) => ({
+      index: a.index,
+      name: `Account ${a.index + 1}`,
+      chain: "solana",
+      publicKey: a.solana
+    }))
+
+    sendResponse({
+      active: formatted[state.activeIndex],
+      accounts: formatted
+    })
+  }
+
+  if (msg.type === "CREATE_ACCOUNT") {
+    const index = state.accounts.length
+    const wallets = deriveWallets(
+      state.mnemonic,
+      index,
+      ["solana", "ethereum"]
+    )
+
+    const account = {
+      index,
+      solana: wallets.solana!.publicKey,
+      ethereum: wallets.ethereum!.publicKey
+    }
+
+    state.accounts.push(account)
+    state.activeIndex = index
+
+    sendResponse({
+      index,
+      name: `Account ${index + 1}`,
+      chain: msg.chain,
+      publicKey:
+        msg.chain === "solana"
+          ? account.solana
+          : account.ethereum
+    })
+  }
+
+  if (msg.type === "SET_ACTIVE_ACCOUNT") {
+    state.activeIndex = msg.index
+  }
+
+  return true
+})
+

@@ -39,3 +39,17 @@ export type OnboardingContext = {
   selectedWallets: WalletType[]
 }
 
+export type Chain = "solana" | "ethereum"
+
+export type Account = {
+  index: number
+  name: string
+  publicKey: string
+  chain: Chain
+}
+
+export type PopupState = {
+  activeAccount: Account
+  accounts: Account[]
+}
+
