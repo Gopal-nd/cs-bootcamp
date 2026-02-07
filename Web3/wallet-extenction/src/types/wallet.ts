@@ -1,4 +1,4 @@
-export type WalletType = "solana" | "ethereum"
+export type WalletType = "solana"
 
 export type DerivedWallet = {
   publicKey: string
@@ -39,17 +39,14 @@ export type OnboardingContext = {
   selectedWallets: WalletType[]
 }
 
-export type Chain = "solana" | "ethereum"
-
 export type Account = {
   index: number
   name: string
   publicKey: string
-  chain: Chain
 }
 
 export type PopupState = {
-  activeAccount: Account
+  activeAccount: Account | null
   accounts: Account[]
 }
 

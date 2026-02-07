@@ -1,19 +1,42 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type { WordCount } from "../../types/wallet.ts"
+import type { WordCount } from "../../types/wallet"
+import { useOnboardingStore, type OnboardingState } from "@/store/onboarding"
 
-type Props = {
-  onSubmit: (mnemonic: string[], count: WordCount) => void
-}
-
-export default function ImportWallet({ onSubmit }: Props) {
+export default function ImportWallet() {
   const [count, setCount] = useState<WordCount>(12)
   const [words, setWords] = useState<string[]>(Array(12).fill(""))
+  const setImported = useOnboardingStore(
+    (state: OnboardingState) => state.setImported
+  )
 
   const switchCount = (c: WordCount) => {
     setCount(c)
     setWords(Array(c).fill(""))
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text")
+    const parts = text
+      .trim()
+      .split(/\s+/)
+      .slice(0, count)
+
+    if (parts.length > 1) {
+      e.preventDefault()
+      const next = Array(count).fill("")
+      parts.forEach((word, i) => {
+        next[i] = word.toLowerCase()
+      })
+      setWords(next)
+    }
+  }
+
+  const handleChange = (i: number, value: string) => {
+    const next = [...words]
+    next[i] = value.trim().toLowerCase()
+    setWords(next)
   }
 
   return (
@@ -33,22 +56,21 @@ export default function ImportWallet({ onSubmit }: Props) {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {words.map((_, i) => (
+        {words.map((word, i) => (
           <Input
             key={i}
+            value={word}
             placeholder={`${i + 1}`}
-            onChange={(e) => {
-              const next = [...words]
-              next[i] = e.target.value.trim()
-              setWords(next)
-            }}
+            onPaste={handlePaste}
+            onChange={(e) => handleChange(i, e.target.value)}
           />
         ))}
       </div>
 
       <Button
         className="w-full"
-        onClick={() => onSubmit(words, count)}
+        onClick={() => setImported(words, count)}
+        disabled={words.some((w) => !w)}
       >
         Continue
       </Button>

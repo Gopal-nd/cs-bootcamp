@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ServiceType {
+  MEDICAL
+  HOUSE_HELP
+  BEAUTY
+  FITNESS
+  EDUCATION
+  OTHER
+}
+
+enum Role {
+  USER
+  SERVICE_PROVIDER
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime       @default(now())
+  services     Service[]
+  appointments Appointments[]
+}
+
+model Service {
+  id              String         @id @default(uuid())
+  name            String
+  type            ServiceType
+  providerId      String
+  user            User           @relation(fields: [providerId], references: [id])
+  durationMinutes Int
+  createdAt       DateTime       @default(now())
+  appointments    Appointments[]
+  availability    Availability[]
+
+  @@index([providerId])
+}
+
+model Availability {
+  id        String  @id @default(uuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  @@index([dayOfWeek, serviceId])
+}
+
+model Appointments {
+  id        String            @id @default(uuid())
+  userId    String
+  serviceId String
+  user      User              @relation(fields: [userId], references: [id])
+  service   Service           @relation(fields: [serviceId], references: [id])
+  date      DateTime
+  startTime String
+  endTime   String
+  slotId    String
+  status    AppointmentStatus
+  createAt  DateTime          @default(now())
+
+  @@unique([slotId])
+  @@index([userId, serviceId, slotId])
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CANCELLED
+}

@@ -1,15 +1,14 @@
 import { Button } from "@/components/ui/button"
 import { requestNewMnemonic } from "../../background/actions"
+import { useOnboardingStore, type OnboardingState } from "@/store/onboarding"
 
-
-type Props = {
-  onGenerated: (mnemonic: string[]) => void
-}
-
-export default function CreateWallet({ onGenerated }: Props) {
+export default function CreateWallet() {
+  const setGenerated = useOnboardingStore(
+    (state: OnboardingState) => state.setGenerated
+  )
   const generate = async () => {
     const mnemonic = await requestNewMnemonic()
-    onGenerated(mnemonic.split(" "))
+    setGenerated(mnemonic.split(" "))
   }
 
   return (

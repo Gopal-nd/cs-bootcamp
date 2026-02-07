@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button"
+import { useOnboardingStore, type OnboardingState } from "@/store/onboarding"
 
-type Props = {
-  onCreate: () => void
-  onImport: () => void
-}
+export default function Welcome() {
+  const go = useOnboardingStore((state: OnboardingState) => state.go)
 
-export default function Welcome({ onCreate, onImport }: Props) {
   return (
     <div className="space-y-6 text-center">
       <h1 className="text-3xl font-bold">Welcome</h1>
@@ -13,11 +11,11 @@ export default function Welcome({ onCreate, onImport }: Props) {
         Create a new wallet or import an existing one
       </p>
 
-      <Button className="w-full" onClick={onCreate}>
+      <Button className="w-full" onClick={() => go("create")}>
         Create New Wallet
       </Button>
 
-      <Button variant="outline" className="w-full" onClick={onImport}>
+      <Button variant="outline" className="w-full" onClick={() => go("import")}>
         Import Wallet
       </Button>
     </div>

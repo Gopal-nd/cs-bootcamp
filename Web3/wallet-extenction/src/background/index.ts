@@ -2,9 +2,12 @@ import "./shims"
 import { generateNewMnemonic, deriveWallets } from "../lib/wallet"
 import { encryptVault } from "../lib/crypto"
 import type { WalletType } from "@/types/wallet"
+import { storageGet, storageSet } from "@/lib/chromeStorage"
 
 async function openOnboardingIfNeeded() {
-  const { hasOnboarded } = await chrome.storage.local.get("hasOnboarded")
+  const { hasOnboarded } = await storageGet<{ hasOnboarded?: boolean }>(
+    "hasOnboarded"
+  )
 
   if (!hasOnboarded) {
     chrome.tabs.create({
@@ -29,95 +32,101 @@ chrome.action.onClicked.addListener(() => {
 })
 
 chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
-  if (msg.type === "CREATE_WALLET") {
-    const mnemonic = generateNewMnemonic()
-    sendResponse({ mnemonic })
+  const type = msg?.type as string | undefined
+
+  if (type === "CREATE_WALLET") {
+    try {
+      const mnemonic = generateNewMnemonic()
+      sendResponse({ mnemonic })
+    } catch (e) {
+      sendResponse({ error: (e as Error).message })
+    }
+    return true
   }
 
-  if (msg.type === "IMPORT_OR_FINISH") {
-    const { mnemonic, password, wallets } = msg as {
-      mnemonic: string
-      password: string
-      wallets: WalletType[]
-    }
+  if (type === "IMPORT_OR_FINISH") {
+    ;(async () => {
+      try {
+        const { mnemonic, password, wallets } = msg as {
+          mnemonic: string
+          password: string
+          wallets: WalletType[]
+        }
 
-    const derived = deriveWallets(mnemonic, 0, wallets)
+        const derived = deriveWallets(mnemonic, 0, wallets)
+        const vault = await encryptVault(
+          JSON.stringify({ mnemonic, wallets: derived, index: 0 }),
+          password
+        )
 
-    encryptVault(
-      JSON.stringify({ mnemonic, wallets: derived, index: 0 }),
-      password
-    ).then(async (vault) => {
-      await chrome.storage.local.set({
-        vault,
-        hasOnboarded: true
-      })
+        // Store encrypted vault + minimal public metadata used by the popup UI
+        await storageSet({
+          vault,
+          hasOnboarded: true,
+          accounts: [
+            {
+              index: 0,
+              solana: derived.solana?.publicKey ?? ""
+            }
+          ],
+          activeAccountIndex: 0
+        })
 
-      sendResponse({ success: true })
-    })
+        sendResponse({ success: true })
+      } catch (e) {
+        sendResponse({ success: false, error: (e as Error).message })
+      }
+    })()
 
     return true
   }
-})
 
-type StoredAccount = {
-  index: number
-  solana: string
-  ethereum: string
-}
+  if (type === "GET_ACCOUNTS") {
+    ;(async () => {
+      try {
+        const stored = await storageGet<{
+          accounts?: Array<{ index: number; solana: string }>
+          activeAccountIndex?: number
+        }>(["accounts", "activeAccountIndex"])
 
-const state = {
-  mnemonic: '',
-  activeIndex: 0,
-  accounts: [] as StoredAccount[]
-}
+        const accounts = stored.accounts ?? []
+        const activeAccountIndex = stored.activeAccountIndex ?? 0
+        const selected = accounts[activeAccountIndex] ?? accounts[0] ?? null
 
-chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
-  if (msg.type === "GET_ACCOUNTS") {
-    const formatted = state.accounts.map((a) => ({
-      index: a.index,
-      name: `Account ${a.index + 1}`,
-      chain: "solana",
-      publicKey: a.solana
-    }))
+        if (!selected || !selected.solana) {
+          sendResponse({ active: null, accounts: [] })
+          return
+        }
 
-    sendResponse({
-      active: formatted[state.activeIndex],
-      accounts: formatted
-    })
+        const active = {
+          index: selected.index,
+          name: `Account ${selected.index + 1}`,
+          publicKey: selected.solana
+        }
+
+        sendResponse({ active, accounts: [active] })
+      } catch (e) {
+        sendResponse({ error: (e as Error).message })
+      }
+    })()
+
+    return true
   }
 
-  if (msg.type === "CREATE_ACCOUNT") {
-    const index = state.accounts.length
-    const wallets = deriveWallets(
-      state.mnemonic,
-      index,
-      ["solana", "ethereum"]
-    )
-
-    const account = {
-      index,
-      solana: wallets.solana!.publicKey,
-      ethereum: wallets.ethereum!.publicKey
-    }
-
-    state.accounts.push(account)
-    state.activeIndex = index
-
-    sendResponse({
-      index,
-      name: `Account ${index + 1}`,
-      chain: msg.chain,
-      publicKey:
-        msg.chain === "solana"
-          ? account.solana
-          : account.ethereum
-    })
+  if (type === "SET_ACTIVE_ACCOUNT") {
+    ;(async () => {
+      try {
+        const { index } = msg as { index: number }
+        await storageSet({ activeAccountIndex: index })
+        sendResponse({ success: true })
+      } catch (e) {
+        sendResponse({ success: false, error: (e as Error).message })
+      }
+    })()
+    return true
   }
 
-  if (msg.type === "SET_ACTIVE_ACCOUNT") {
-    state.activeIndex = msg.index
-  }
-
-  return true
+  // Unknown message type
+  return false
 })
 
